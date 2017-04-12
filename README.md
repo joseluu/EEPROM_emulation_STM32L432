@@ -5,3 +5,4 @@ not available in the STM32L432.
 
 This is an adaptation to the STM32L432.
 
+Compile with make and this toolchain: http://gnutoolchains.com/arm-eabi/
