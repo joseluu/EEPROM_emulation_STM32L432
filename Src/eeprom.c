@@ -61,10 +61,10 @@
 */
 #define PAGE_SIZE               (uint32_t)FLASH_PAGE_SIZE  /* Page size */
 
-#define PAGE0_NUMBER            (uint32_t)126
+#define PAGE0_NUMBER            (uint32_t)125
 #define PAGE0_BANKNUMBER        FLASH_BANK_1
 
-#define PAGE1_NUMBER            (uint32_t)127
+#define PAGE1_NUMBER            (uint32_t)126
 #define PAGE1_BANKNUMBER        FLASH_BANK_1
 
 /* Pages 0 and 1 base and end addresses */
@@ -84,9 +84,9 @@
 /* Page stat : size of the data in flash is 64 bits */
 #define EE_DATA_SIZE             8
 #define EE_DATA_TYPE             uint64_t    
-#define EE_DATA_SHIFT            32    
-#define EE_MASK_VIRTUALADRESS    (uint64_t)0x0000FFFF00000000
-#define EE_MASK_DATA             (uint64_t)0xFFFF000000000000
+#define EE_DATA_SHIFT            16
+#define EE_MASK_VIRTUALADRESS    (uint64_t)0x00000000FFFF0000
+#define EE_MASK_DATA             (uint64_t)0xFFFFFFFF00000000
 #define EE_MASK_FULL             (uint64_t)0xFFFFFFFFFFFFFFFF
 
 /* Type of find requested : 
@@ -115,14 +115,14 @@ typedef enum {
 /* Global variable used to store variable value in read sequence */
 
 /* Virtual address defined by the user: 0xFFFF value is prohibited */
-extern uint16_t VirtAddVarTab[];
+extern EE_VIRTUALADDRESS_TYPE VirtAddVarTab[];
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 static EE_Status EE_Format(void);
 static uint32_t EE_FindPage(EE_Find_type Operation);
-static EE_Status EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t Data);
-static EE_Status EE_PageTransfer(uint16_t VirtAddress, uint16_t Data, EE_Transfer_type type);
+static EE_Status EE_VerifyPageFullWriteVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data);
+static EE_Status EE_PageTransfer(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data, EE_Transfer_type type);
 static EE_Status EE_VerifyPageFullyErased(uint32_t Address, uint32_t PageSize);
 static EE_Status EE_PageErase(uint32_t Page, uint16_t BankNb);
 static uint32_t EE_GetPageNumber(uint32_t Address);
@@ -205,7 +205,7 @@ EE_Status EE_Init(void)
         /* Get the first udpated value from the reception page */
         addressvalue = (*(__IO EE_DATA_TYPE*)(PAGE0_BASE_ADDRESS + EE_DATA_SIZE));
         /* Restart the interrupted page transfer */
-        if(EE_PageTransfer((addressvalue & EE_MASK_VIRTUALADRESS) >> EE_DATA_SHIFT, (uint16_t)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT+16)), EE_TRANSFER_RECOVER) != EE_OK)
+        if(EE_PageTransfer((addressvalue & EE_MASK_VIRTUALADRESS) >> EE_DATA_SHIFT, (EE_DATA_STORED_TYPE)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT+16)), EE_TRANSFER_RECOVER) != EE_OK)
         {
           return EE_TRANSFER_ERROR;
         }
@@ -268,7 +268,7 @@ EE_Status EE_Init(void)
         /* Get the first udpated value from the reception page */
         addressvalue = (*(__IO EE_DATA_TYPE*)(PAGE1_BASE_ADDRESS + EE_DATA_SIZE));
         /* Restart the interrupted page transfer */
-        if(EE_PageTransfer((addressvalue & EE_MASK_VIRTUALADRESS) >> EE_DATA_SHIFT, (uint16_t)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT+16)), EE_TRANSFER_RECOVER) != EE_OK)
+        if(EE_PageTransfer((addressvalue & EE_MASK_VIRTUALADRESS) >> EE_DATA_SHIFT, (EE_DATA_STORED_TYPE)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT+16)), EE_TRANSFER_RECOVER) != EE_OK)
         {
           return EE_TRANSFER_ERROR;
         }
@@ -335,7 +335,7 @@ EE_Status EE_VerifyPageFullyErased(uint32_t Address, uint32_t PageSize)
   *           - EE_NO_DATA: if the variable was not found
   *           - EE_ERROR_NOVALID_PAGE: if no valid page was found.
   */
-EE_Status EE_ReadVariable(uint16_t VirtAddress, uint16_t* Data)
+EE_Status EE_ReadVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE* Data)
 {
   EE_DATA_TYPE addressvalue;
   uint32_t counter = PAGE_SIZE - EE_DATA_SIZE;
@@ -360,7 +360,7 @@ EE_Status EE_ReadVariable(uint16_t VirtAddress, uint16_t* Data)
       if ((addressvalue & EE_MASK_VIRTUALADRESS) == ((EE_DATA_TYPE)VirtAddress << EE_DATA_SHIFT))
       {
         /* Get content of Address-2 which is variable value */
-        *Data = (uint16_t)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT + 16));
+        *Data = (EE_DATA_STORED_TYPE)((addressvalue & EE_MASK_DATA) >> (EE_DATA_SHIFT + 16));
         /* In case variable value is read, reset readstatus flag */
         return EE_OK;
       }
@@ -381,7 +381,7 @@ EE_Status EE_ReadVariable(uint16_t VirtAddress, uint16_t* Data)
   *           - EE_OK: on success
   *           - EE error code: if an error occurs
   */
-EE_Status EE_WriteVariable(uint16_t VirtAddress, uint16_t Data)
+EE_Status EE_WriteVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data)
 {
   EE_Status status;
   
@@ -533,7 +533,7 @@ static uint32_t EE_FindPage(EE_Find_type Operation)
   *           - EE_FULL: if the page is full
   *           - EE error code: if an error occurs
   */
-static EE_Status EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t Data)
+static EE_Status EE_VerifyPageFullWriteVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data)
 {
   uint32_t count = EE_DATA_SIZE; /* start the check after the header */ 
  
@@ -553,7 +553,9 @@ static EE_Status EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t D
     {
       /* Set variable data + virtual adress */
       /* If program operation was failed, a Flash error code is returned */
-      if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, validpage+count, ((EE_DATA_TYPE)(Data << 16) | VirtAddress) << EE_DATA_SHIFT) != HAL_OK)
+      if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, validpage+count, 
+							((((EE_DATA_TYPE)Data) << 16) | VirtAddress) << EE_DATA_SHIFT
+							) != HAL_OK)
       {
         return EE_WRITE_ERROR;
       }
@@ -578,11 +580,11 @@ static EE_Status EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t D
   *           - EE_OK: on success
   *           - EE error code: if an error occurs
   */
-static EE_Status EE_PageTransfer(uint16_t VirtAddress, uint16_t Data, EE_Transfer_type type)
+static EE_Status EE_PageTransfer(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data, EE_Transfer_type type)
 {
   uint32_t activepageaddress, newpageaddress;
   uint32_t varidx = 0;
-  uint16_t DataValue;
+  EE_DATA_STORED_TYPE DataValue;
   
   /* Get active Page for read operation */
   activepageaddress = EE_FindPage(FIND_READ_PAGE);

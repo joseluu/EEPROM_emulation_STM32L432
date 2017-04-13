@@ -44,9 +44,9 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Virtual address defined by the user: 0xFFFF value is prohibited */
-uint16_t VirtAddVarTab[NB_OF_VAR] = { 0x5555, 0x6666, 0x7777 };
-uint16_t VarDataTab[NB_OF_VAR] = { 0, 0, 0 };
-uint16_t VarValue = 0;
+EE_VIRTUALADDRESS_TYPE VirtAddVarTab[NB_OF_VAR] = { 0x5555, 0x6666, 0x7777 };
+EE_DATA_STORED_TYPE VarDataTab[NB_OF_VAR] = { 0, 0, 0 };
+EE_DATA_STORED_TYPE VarValue = 0;
 
 
 /* USER CODE END PV */
@@ -93,7 +93,7 @@ int main(void)
 /* --- Store successively many values of the three variables in the EEPROM ---*/
   /* Store 0x1000 values of Variable1 in EEPROM */
 	for (VarValue = 1; VarValue <= 0x1000; VarValue++) {
-		EE_WriteVariable(VirtAddVarTab[0], VarValue);
+		EE_WriteVariable(VirtAddVarTab[0], (VarValue << 16) | VarValue);
 	}
 
 	  /* read the last stored variables data*/
@@ -102,7 +102,7 @@ int main(void)
 
 	  /* Store 0x2000 values of Variable2 in EEPROM */
 	for (VarValue = 1; VarValue <= 0x2000; VarValue++) {
-		EE_WriteVariable(VirtAddVarTab[1], VarValue);
+		EE_WriteVariable(VirtAddVarTab[1], (VarValue << 16) | VarValue);
 	}
 
 	  /* read the last stored variables data*/
@@ -112,7 +112,7 @@ int main(void)
 
 	  /* Store 0x3000 values of Variable3 in EEPROM */
 	for (VarValue = 1; VarValue <= 0x3000; VarValue++) {
-		EE_WriteVariable(VirtAddVarTab[2], VarValue);
+		EE_WriteVariable(VirtAddVarTab[2], (VarValue << 16) | VarValue);
 	}
 
 	  /* read the last stored variables data*/

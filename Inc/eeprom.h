@@ -71,6 +71,8 @@ typedef enum {
   EE_PAGE_FULL,
 } EE_Status;
 
+#define EE_DATA_STORED_TYPE		 uint32_t
+#define EE_VIRTUALADDRESS_TYPE	 uint16_t
 /* Variables' number */
 #define NB_OF_VAR             ((uint8_t)0x03)
 
@@ -78,8 +80,8 @@ typedef enum {
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 EE_Status EE_Init(void);
-EE_Status EE_ReadVariable(uint16_t VirtAddress, uint16_t* Data);
-EE_Status EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
+EE_Status EE_ReadVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE* Data);
+EE_Status EE_WriteVariable(EE_VIRTUALADDRESS_TYPE VirtAddress, EE_DATA_STORED_TYPE Data);
 
 #endif /* __EEPROM_H */
 
